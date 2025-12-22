@@ -16,6 +16,7 @@ type apiConfig struct {
 	db             *database.Queries
 	fileserverHits atomic.Int32
 	platform       string
+	secret         string
 }
 
 func main() {
@@ -23,6 +24,10 @@ func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	pf := os.Getenv("PLATFORM")
+	secret := os.Getenv("SERVER_SECRET")
+	if secret == "" {
+		log.Fatal("SERVER_SECRET is not set")
+	}
 
 	const filepathRoot = "."
 	const port = "8080"
@@ -37,6 +42,7 @@ func main() {
 		db:             dbQueries,
 		fileserverHits: atomic.Int32{},
 		platform:       pf,
+		secret:         secret,
 	}
 
 	mux := http.NewServeMux()

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jaxhemopo/Chirpy/internal/auth"
 	"github.com/jaxhemopo/Chirpy/internal/database"
 )
 
@@ -21,9 +22,21 @@ type Chirp struct {
 }
 
 func (cfg *apiConfig) HandleChirps(w http.ResponseWriter, r *http.Request) {
+	bearerToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(bearerToken, cfg.secret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	newChirp := Chirp{}
-	err := decoder.Decode(&newChirp)
+	err = decoder.Decode(&newChirp)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not decode the parameters", err)
 		return
@@ -40,7 +53,7 @@ func (cfg *apiConfig) HandleChirps(w http.ResponseWriter, r *http.Request) {
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID:    newChirp.UserID,
+		UserID:    userID,
 		Body:      cleanedChirp,
 	})
 
