@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"log"
 	"net/http"
@@ -37,4 +39,13 @@ func CheckPasswordHash(password, hash string) (bool, error) {
 		log.Fatal(err)
 	}
 	return match, nil
+}
+
+func MakeRefreshToken() (string, error) {
+	tokenBytes := make([]byte, 32)
+	_, err := rand.Read(tokenBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return hex.EncodeToString(tokenBytes), nil
 }

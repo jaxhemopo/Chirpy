@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(userID uuid.UUID, tokenSecret string) (string, error) {
 	var (
 		key []byte
 		t   *jwt.Token
@@ -19,7 +19,7 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 		jwt.MapClaims{
 			"iss": "chirpy",
 			"iat": time.Now().Unix(),
-			"exp": time.Now().Add(expiresIn).Unix(),
+			"exp": time.Now().Add(time.Hour * 1).Unix(),
 			"sub": userID.String(),
 		})
 	s, err := t.SignedString(key)

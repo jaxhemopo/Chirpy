@@ -22,7 +22,7 @@ VALUES (
     $4,
     $5
 )
-RETURNING id, created_at, updated_at, email, password
+RETURNING id, created_at, updated_at, email, password, is_chirpy_red
 `
 
 type CreateUserParams struct {
@@ -48,12 +48,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.UpdatedAt,
 		&i.Email,
 		&i.Password,
+		&i.IsChirpyRed,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, created_at, updated_at, email, password FROM users
+SELECT id, created_at, updated_at, email, password, is_chirpy_red FROM users
 WHERE email = $1
 `
 
@@ -66,7 +67,29 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (Use
 		&i.UpdatedAt,
 		&i.Email,
 		&i.Password,
+		&i.IsChirpyRed,
 	)
+	return i, err
+}
+
+const getUserFromRefreshToken = `-- name: GetUserFromRefreshToken :one
+SELECT id, email
+FROM users u
+JOIN refresh_tokens rt ON rt.user_id = u.id
+WHERE rt.token = $1 
+AND rt.expires_at > NOW() 
+AND rt.revoked_at IS NULL
+`
+
+type GetUserFromRefreshTokenRow struct {
+	ID    uuid.UUID
+	Email sql.NullString
+}
+
+func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (GetUserFromRefreshTokenRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserFromRefreshToken, token)
+	var i GetUserFromRefreshTokenRow
+	err := row.Scan(&i.ID, &i.Email)
 	return i, err
 }
 
@@ -76,5 +99,22 @@ DELETE FROM users
 
 func (q *Queries) ResetUsers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, resetUsers)
+	return err
+}
+
+const setIsChirpyRed = `-- name: SetIsChirpyRed :exec
+UPDATE users
+SET is_chirpy_red = $1,
+    updated_at = NOW()
+WHERE id = $2
+`
+
+type SetIsChirpyRedParams struct {
+	IsChirpyRed bool
+	ID          uuid.UUID
+}
+
+func (q *Queries) SetIsChirpyRed(ctx context.Context, arg SetIsChirpyRedParams) error {
+	_, err := q.db.ExecContext(ctx, setIsChirpyRed, arg.IsChirpyRed, arg.ID)
 	return err
 }

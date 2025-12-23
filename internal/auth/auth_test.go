@@ -3,7 +3,6 @@ package auth
 import (
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -11,9 +10,8 @@ import (
 func TestJWT(t *testing.T) {
 	userID := uuid.New()
 	secret := "mysecretkey"
-	expiration := time.Hour * 1
 
-	token, err := MakeJWT(userID, secret, expiration)
+	token, err := MakeJWT(userID, secret)
 	if err != nil {
 		t.Fatal("Failed to create JWT:", err)
 	}
@@ -32,9 +30,8 @@ func TestWrongSecret(t *testing.T) {
 	userID := uuid.New()
 	secret := "mysecretkey"
 	wrongSecret := "mysecretkeys"
-	expiration := time.Hour * 1
 
-	token, err := MakeJWT(userID, secret, expiration)
+	token, err := MakeJWT(userID, secret)
 	if err != nil {
 		t.Fatal("Failed to create JWT", err)
 	}
@@ -48,10 +45,9 @@ func TestWrongSecret(t *testing.T) {
 func TestExpiredToken(t *testing.T) {
 	userID := uuid.New()
 	secret := "mysecretkey"
-	expiration := -time.Hour
 	//Can use -time.Hour instead of using time.Sleep to speed up tests.
 
-	token, err := MakeJWT(userID, secret, expiration)
+	token, err := MakeJWT(userID, secret)
 	if err != nil {
 		t.Fatal("Failed to create JWT, err")
 	}
