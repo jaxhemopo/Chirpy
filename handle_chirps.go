@@ -62,6 +62,7 @@ func (cfg *apiConfig) HandleChirps(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "could not create chirp", err)
 		return
 	}
+
 	respondWithJSON(w, http.StatusCreated, Chirp{
 		ID:        chirp.ID,
 		CreatedAt: chirp.CreatedAt,

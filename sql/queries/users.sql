@@ -30,3 +30,11 @@ UPDATE users
 SET is_chirpy_red = $1,
     updated_at = NOW()
 WHERE id = $2;
+
+-- name: UpdateUserCredentials :one
+UPDATE users
+SET email = $2,
+    password = $3,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, email, password, is_chirpy_red;

@@ -7,10 +7,21 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jaxhemopo/Chirpy/internal/auth"
 	"github.com/jaxhemopo/Chirpy/internal/database"
 )
 
 func (cfg *apiConfig) HandlePolkaWebhook(w http.ResponseWriter, r *http.Request) {
+	webhookKey, err := auth.GetApiKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "could not get API key from header", err)
+		return
+	}
+	if webhookKey != cfg.PolkaAPIKey {
+		respondWithError(w, http.StatusUnauthorized, "invalid API key", nil)
+		return
+	}
+
 	type Data struct {
 		UserID string `json:"user_id"`
 	}
@@ -21,7 +32,7 @@ func (cfg *apiConfig) HandlePolkaWebhook(w http.ResponseWriter, r *http.Request)
 
 	decoder := json.NewDecoder(r.Body)
 	params := requestParams{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "could not decode the parameters", err)
 		return

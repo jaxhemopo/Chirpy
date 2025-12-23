@@ -118,3 +118,32 @@ func (q *Queries) SetIsChirpyRed(ctx context.Context, arg SetIsChirpyRedParams) 
 	_, err := q.db.ExecContext(ctx, setIsChirpyRed, arg.IsChirpyRed, arg.ID)
 	return err
 }
+
+const updateUserCredentials = `-- name: UpdateUserCredentials :one
+UPDATE users
+SET email = $2,
+    password = $3,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, email, password, is_chirpy_red
+`
+
+type UpdateUserCredentialsParams struct {
+	ID       uuid.UUID
+	Email    sql.NullString
+	Password string
+}
+
+func (q *Queries) UpdateUserCredentials(ctx context.Context, arg UpdateUserCredentialsParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserCredentials, arg.ID, arg.Email, arg.Password)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.Password,
+		&i.IsChirpyRed,
+	)
+	return i, err
+}

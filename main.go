@@ -17,6 +17,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	platform       string
 	secret         string
+	PolkaAPIKey    string
 }
 
 func main() {
@@ -27,6 +28,10 @@ func main() {
 	secret := os.Getenv("SERVER_SECRET")
 	if secret == "" {
 		log.Fatal("SERVER_SECRET is not set")
+	}
+	polkaKey := os.Getenv("POLKA_KEY")
+	if polkaKey == "" {
+		log.Fatal("POLKA_KEY is not set")
 	}
 
 	const filepathRoot = "."
@@ -43,6 +48,7 @@ func main() {
 		fileserverHits: atomic.Int32{},
 		platform:       pf,
 		secret:         secret,
+		PolkaAPIKey:    polkaKey,
 	}
 
 	mux := http.NewServeMux()
@@ -59,6 +65,8 @@ func main() {
 	mux.HandleFunc("POST /api/refresh", apiCfg.HandleRefresh)
 	mux.HandleFunc("POST /api/revoke", apiCfg.HandleRevoke)
 	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.HandlePolkaWebhook)
+	mux.HandleFunc("PUT /api/users", apiCfg.HandleUserCredentials)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.HandleDeleteChirp)
 
 	Server := &http.Server{
 		Addr:    ":" + port,
