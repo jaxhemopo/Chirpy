@@ -22,19 +22,18 @@ func (cfg *apiConfig) HandlePolkaWebhook(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	type Data struct {
-		UserID string `json:"user_id"`
-	}
 	type requestParams struct {
 		Event string `json:"event"`
-		Data  Data   `json:"data"`
+		Data  struct {
+			UserID string
+		} `json:"user_id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
 	params := requestParams{}
 	err = decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "could not decode the parameters", err)
+		respondWithError(w, http.StatusInternalServerError, "could not decode the parameters", err)
 		return
 	}
 
